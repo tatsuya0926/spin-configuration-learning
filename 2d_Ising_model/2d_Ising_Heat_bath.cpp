@@ -1,17 +1,14 @@
-/************************************/
-/*** 2d Ising model with Heat Bath***/
-/************************************/
 #include <iostream>
 #include <cmath>
 #include <fstream>
-const long int niter = 4096000;
+const long int niter = 1000000;
 const int nx = 64; // number of sites along x-direction
 const int ny = 64; // number of sites along y-direction
-const double coupling_J = 1.0e0;
-const double coupling_h = 0.1e0;
-const double temperature = 5e0;
-const int nskip = 40960; // Frequency of measurement
-const int nconfig = 0;   // 0 -> read 'input_config.txt'; 1 -> all up; -1 -> all down
+const double coupling_J = 1.0;
+const double coupling_h = 0.1;
+const double temperature = 5.0;
+const int nskip = 100; // Frequency of measurement
+const int nconfig = 1; // 0 -> read 'input_config.txt'; 1 -> all up; -1 -> all down
 /*********************************/
 /*** Calculation of the action ***/
 /*********************************/
@@ -75,6 +72,22 @@ int calc_total_spin(const int spin[nx][ny])
     return total_spin;
 }
 
+int calc_total_plus_spin(const int spin[nx][ny])
+{
+    int total_spin = 0;
+    for (int ix = 0; ix != nx; ix++)
+    {
+        for (int iy = 0; iy != ny; iy++)
+        {
+            if (spin[ix][iy] == 1)
+            {
+                total_spin = total_spin + 1;
+            }
+        }
+    }
+    return total_spin;
+}
+
 int main()
 {
     int spin[nx][ny];
@@ -122,8 +135,8 @@ int main()
     /*****************/
     /**** 熱浴法 *****/
     /*****************/
-    std::ofstream outputfile("output/2d_Ising_Heat_bath_output.txt");
-    int naccept = 0; // 受理した合計数
+    std::ofstream outputfile("output/Heat_bath/2d_Ising_Heat_bath_output_t5.txt");
+    int count = 0;
 
     for (long int iter = 0; iter != niter; iter++)
     {
@@ -144,33 +157,40 @@ int main()
         }
 
         int total_spin = calc_total_spin(spin);
+        int total_plus_spin = calc_total_plus_spin(spin);
         double energy = calc_action(spin, coupling_J, coupling_h, temperature) * temperature;
         /*******************/
         /*** data output ***/
         /*******************/
+        // if (iter % nskip == 0)
+        // {
+        //     std::ofstream outputconfig("output/fig/2d_Ising_Heat_bath_output_config_" + std::to_string(count) + ".txt");
+        //     for (int ix = 0; ix != nx; ix++)
+        //     {
+        //         for (int iy = 0; iy != ny; iy++)
+        //         {
+        //             outputconfig << ix << ' ' << iy << ' ' << spin[ix][iy] << ' ' << std::endl;
+        //         }
+        //     }
+        //     count++;
+        //     outputconfig.close();
+        // }
+
         if ((iter + 1) % nskip == 0)
         {
             std::cout << std::fixed << std::setprecision(4)
+                      << count * nskip << "   "
                       << total_spin << "   "
-                      << energy << std::endl;
+                      << total_plus_spin << "   "
+                      << energy << "   " << std::endl;
             outputfile << std::fixed << std::setprecision(4)
+                       << count * nskip << "   "
                        << total_spin << "   "
-                       << energy << std::endl;
+                       << total_plus_spin << "   "
+                       << energy << "   " << std::endl;
+            count++;
         }
     }
     outputfile.close();
-    /*************************/
-    /*** save final config ***/
-    /*************************/
-    std::ofstream outputconfig("output/2d_Ising_Heat_bath_output_config.txt");
-    for (int ix = 0; ix != nx; ix++)
-    {
-        for (int iy = 0; iy != ny; iy++)
-        {
-            outputconfig << ix << ' ' << iy << ' ' << spin[ix][iy]
-                         << ' ' << std::endl;
-        }
-    }
-    outputconfig.close();
     return 0;
 }

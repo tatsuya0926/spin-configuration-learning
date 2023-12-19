@@ -1,21 +1,21 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
-const long int niter = 4096000;
-const long int step_length = 10000;
+const long int niter = 1000000;
+const long int step_length = 1000;
 const int nx = 64; // number of sites along x-direction
 const int ny = 64; // number of sites along y-direction
 const double coupling_J = 1e0;
 const double coupling_h = 0.1e0;
 const double cooling_rate = 0.995;
-const int nskip = 40960; // Frequency of measurement
+const int nskip = 10000; // Frequency of measurement
 const int nconfig = 1;   // 0 -> read 'input_config.txt'; 1 -> all up; -1 -> all down
 /*********************************/
 /*** Calculation of the action ***/
 /*********************************/
 double calc_action(const int spin[nx][ny], const double coupling_J, const double coupling_h, const double temperature)
 {
-    double action = 0e0;
+    double action = 0.0;
     int sum1 = 0;
     int sum2 = 0;
     for (int ix = 0; ix != nx; ix++)
@@ -70,10 +70,26 @@ int calc_total_spin(const int spin[nx][ny])
     return total_spin;
 }
 
+int calc_total_plus_spin(const int spin[nx][ny])
+{
+    int total_spin = 0;
+    for (int ix = 0; ix != nx; ix++)
+    {
+        for (int iy = 0; iy != ny; iy++)
+        {
+            if (spin[ix][iy] == 1)
+            {
+                total_spin++;
+            }
+        }
+    }
+    return total_spin;
+}
+
 int main()
 {
     int spin[nx][ny];
-    double temperature = 5e0;
+    double temperature = 5.0;
     srand((unsigned)time(NULL));
     /*********************************/
     /********* 初期状態の決定 ********/
@@ -119,10 +135,10 @@ int main()
     /******* simulated annealing *******/
     /***********************************/
     std::ofstream outputfile("output/2d_Ising_simulated_annealing_output.txt");
-    int naccept = 0; //受理した合計数
 
     for (long int s = 0; s < step_length; s++)
     {
+        int naccept = 0; //受理した合計数
         for (long int iter = 0; iter != niter; iter++)
         {
             double rand_site = (double)rand() / RAND_MAX;
@@ -141,23 +157,25 @@ int main()
             {
                 // reject
             }
-            int total_spin = calc_total_spin(spin);
-            double energy = calc_action(spin, coupling_J, coupling_h, temperature) * temperature;
-            /*******************/
-            /*** data output ***/
-            /*******************/
-            if ((iter + 1) % nskip == 0)
-            {
-                std::cout << std::fixed << std::setprecision(4)
-                          << total_spin << "   "
-                          << energy << "   "
-                          << (double)naccept / (iter + 1) << std::endl;
-                outputfile << std::fixed << std::setprecision(4)
-                           << total_spin << "   "
-                           << energy << "   "
-                           << (double)naccept / (iter + 1) << std::endl;
-            }
         }
+        /*******************/
+        /*** data output ***/
+        /*******************/
+        int total_spin = calc_total_spin(spin);
+        int total_plus_spin = calc_total_plus_spin(spin);
+        double energy = calc_action(spin, coupling_J, coupling_h, temperature) * temperature;
+        std::cout << std::fixed << std::setprecision(4)
+                  << total_spin << "   "
+                  << total_plus_spin << "   "
+                  << energy << "   "
+                  << temperature << "   "
+                  << (double)naccept / niter << std::endl;
+        outputfile << std::fixed << std::setprecision(4)
+                   << total_spin << "   "
+                   << total_plus_spin << "   "
+                   << energy << "   "
+                   << temperature << "   "
+                   << (double)naccept / niter << std::endl;
         temperature = cooling_rate * temperature;
     }
     outputfile.close();

@@ -163,6 +163,8 @@ cython_debug/
 
 *.csv
 *.png
+*.npy
+*.pth
 output/
 
 .vscode
