@@ -4,8 +4,9 @@
 #include <string>
 #include <algorithm>
 const long int niter = 1000000;
-const int nx = 64; // number of sites along x-direction
-const int ny = 64; // number of sites along y-direction
+const int L = 64;
+const int nx = L; // number of sites along x-direction
+const int ny = L; // number of sites along y-direction
 const double coupling_J = 1.0;
 const int Q = 3;
 const int nconf = 30;
@@ -34,7 +35,14 @@ double calc_action_change(const int spin[nx][ny], const int next_spin, const dou
     int ixm1 = (ix - 1 + nx) % nx; // ixm1=ix-1; be careful about the boundary condition.
     int iym1 = (iy - 1 + ny) % ny; // iym1=iy-1; be careful about the boundary condition.
 
-    int sum_change = kronecker_delta(spin[ix][iy], spin[ixp1][iy]) + kronecker_delta(spin[ix][iy], spin[ix][iyp1]) + kronecker_delta(spin[ix][iy], spin[ixm1][iy]) + kronecker_delta(spin[ix][iy], spin[ix][iym1]) - kronecker_delta(next_spin, spin[ixp1][iy]) - kronecker_delta(next_spin, spin[ix][iyp1]) - kronecker_delta(next_spin, spin[ixm1][iy]) - kronecker_delta(next_spin, spin[ix][iym1]);
+    int sum_change = kronecker_delta(spin[ix][iy], spin[ixp1][iy]) +
+                     kronecker_delta(spin[ix][iy], spin[ix][iyp1]) +
+                     kronecker_delta(spin[ix][iy], spin[ixm1][iy]) +
+                     kronecker_delta(spin[ix][iy], spin[ix][iym1]) -
+                     kronecker_delta(next_spin, spin[ixp1][iy]) -
+                     kronecker_delta(next_spin, spin[ix][iyp1]) -
+                     kronecker_delta(next_spin, spin[ixm1][iy]) -
+                     kronecker_delta(next_spin, spin[ix][iym1]);
 
     action_change = sum_change * coupling_J / temperature;
 

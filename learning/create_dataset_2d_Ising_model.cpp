@@ -4,8 +4,9 @@
 #include <string>
 #include <algorithm>
 const long int niter = 1000000;
-const int nx = 64; // number of sites along x-direction
-const int ny = 64; // number of sites along y-direction
+const int L = 64;
+const int nx = L; // number of sites along x-direction
+const int ny = L; // number of sites along y-direction
 const double coupling_J = 1.0;
 const int nconf = 30;
 const int ndata = 50;
