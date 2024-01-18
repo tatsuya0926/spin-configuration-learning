@@ -166,5 +166,7 @@ cython_debug/
 *.npy
 *.pth
 output/
+dataset/
+txtfile/
 
 .vscode
