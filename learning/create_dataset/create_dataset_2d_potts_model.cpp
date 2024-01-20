@@ -3,35 +3,45 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
-const double pi = 3.141592653589793;
 const long int niter = 1000000;
 const int L = 64;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
 const double coupling_J = 1.0;
-const int Q = 4;
-const int nconf = 50;
+const int Q = 3;
+const int nconf = 30;
 const int ndata = 25;
-// dataset_num = (nconf + 1) * ndata;
+
+double kronecker_delta(const int spin_1, const int spin_2)
+{
+    if (spin_1 == spin_2)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
 
 double calc_action_change(const int spin[nx][ny], const int next_spin, const double coupling_J, const double temperature, const int ix, const int iy)
 {
     double action_change = 0e0;
-    // int sum_change=0;
+    // double sum_change=0;
 
-    int ixp1 = (ix + 1) % nx;      // ixp1=ix+1;
-    int iyp1 = (iy + 1) % ny;      // iyp1=iy+1;
-    int ixm1 = (ix - 1 + nx) % nx; // ixm1=ix-1;
-    int iym1 = (iy - 1 + ny) % ny; // iym1=iy-1;
+    int ixp1 = (ix + 1) % nx;      // ixp1=ix+1; be careful about the boundary condition.
+    int iyp1 = (iy + 1) % ny;      // iyp1=iy+1; be careful about the boundary condition.
+    int ixm1 = (ix - 1 + nx) % nx; // ixm1=ix-1; be careful about the boundary condition.
+    int iym1 = (iy - 1 + ny) % ny; // iym1=iy-1; be careful about the boundary condition.
 
-    int sum_change = std::cos(2 * pi * spin[ix][iy] / Q - 2 * pi * spin[ixp1][iy] / Q) + 
-                     std::cos(2 * pi * spin[ix][iy] / Q - 2 * pi * spin[ix][iyp1] / Q) + 
-                     std::cos(2 * pi * spin[ix][iy] / Q - 2 * pi * spin[ixm1][iy] / Q) + 
-                     std::cos(2 * pi * spin[ix][iy] / Q - 2 * pi * spin[ix][iym1] / Q) - 
-                     std::cos(2 * pi * next_spin / Q - 2 * pi * spin[ixp1][iy] / Q) - 
-                     std::cos(2 * pi * next_spin / Q - 2 * pi * spin[ix][iyp1] / Q) - 
-                     std::cos(2 * pi * next_spin / Q - 2 * pi * spin[ixm1][iy] / Q) - 
-                     std::cos(2 * pi * next_spin / Q - 2 * pi * spin[ix][iym1] / Q);
+    double sum_change = kronecker_delta(spin[ix][iy], spin[ixp1][iy]) +
+                        kronecker_delta(spin[ix][iy], spin[ix][iyp1]) +
+                        kronecker_delta(spin[ix][iy], spin[ixm1][iy]) +
+                        kronecker_delta(spin[ix][iy], spin[ix][iym1]) -
+                        kronecker_delta(next_spin, spin[ixp1][iy]) -
+                        kronecker_delta(next_spin, spin[ix][iyp1]) -
+                        kronecker_delta(next_spin, spin[ixm1][iy]) -
+                        kronecker_delta(next_spin, spin[ix][iym1]);
 
     action_change = sum_change * coupling_J / temperature;
 
@@ -41,7 +51,7 @@ double calc_action_change(const int spin[nx][ny], const int next_spin, const dou
 int main()
 {
     double temperature[nconf + 1];
-    double sum = 0.9;
+    double sum = 0.85;
     for (int i = 0; i < nconf + 1; i++)
     {
         temperature[i] = sum;
@@ -59,7 +69,7 @@ int main()
         {
             for (int iy = 0; iy != ny; iy++)
             {
-                spin[ix][iy] = 1;
+                spin[ix][iy] = 0;
             }
         }
         // 各温度でモンテカルロシミュレーション
@@ -84,7 +94,7 @@ int main()
 
             if (iter > 750000 && iter % 2000 == 0 && data_num < ndata)
             {
-                std::ofstream outputfile("txtfile/2d_Clock/L64T" + std::to_string(conf) + "_" + std::to_string(data_num) + ".txt");
+                std::ofstream outputfile("../txtfile/2d_Potts/L64T" + std::to_string(conf) + "_" + std::to_string(data_num) + ".txt");
                 for (int ix = 0; ix != nx; ix++)
                 {
                     for (int iy = 0; iy != ny; iy++)
