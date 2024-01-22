@@ -10,7 +10,8 @@ const int ny = L; // number of sites along y-direction
 const double coupling_J = 1.0;
 const int Q = 5;
 const int nconf = 30;
-const int ndata = 200;
+const int ndata = 400;
+const double t_start = 0.7;
 
 double kronecker_delta(const int spin_1, const int spin_2)
 {
@@ -51,7 +52,7 @@ double calc_action_change(const int spin[nx][ny], const int next_spin, const dou
 int main()
 {
     double temperature[nconf + 1];
-    double sum = 0.7;
+    double sum = t_start;
     for (int i = 0; i < nconf + 1; i++)
     {
         temperature[i] = sum;
@@ -92,7 +93,7 @@ int main()
                 // reject
             }
 
-            if (iter > 500000 && iter % 2000 == 0 && data_num < ndata)
+            if (iter > 100000 && iter % 2200 == 0 && data_num < ndata)
             {
                 std::ofstream outputfile("../txtfile/2d_Potts/q=" + std::to_string(Q) + "/L" + std::to_string(L) + "T" + std::to_string(conf) + "_" + std::to_string(data_num) + ".txt");
                 for (int ix = 0; ix != nx; ix++)

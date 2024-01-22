@@ -9,6 +9,8 @@ const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
 const double coupling_J = 1.0;
 const int nconf = 30;
+const int ndata = 400;
+const double t_start = 2.1;
 
 double calc_action_change(const int spin[nx][ny], const double coupling_J, const double temperature, const int ix, const int iy)
 {
@@ -32,9 +34,8 @@ double calc_action_change(const int spin[nx][ny], const double coupling_J, const
 
 int main()
 {
-    int ndata = 300;
     double temperature[nconf + 1];
-    double sum = 2.1;
+    double sum = t_start;
     for (int i = 0; i < nconf + 1; i++)
     {
         temperature[i] = sum;
@@ -73,7 +74,7 @@ int main()
             {
                 // reject
             }
-            if (iter > 100000 && iter % 2995 == 0 && data_num < ndata)
+            if (iter > 100000 && iter % 2200 == 0 && data_num < ndata)
             {
                 std::ofstream outputfile("../txtfile/2d_Ising/L" + std::to_string(L) + "T" + std::to_string(conf) + "_" + std::to_string(data_num) + ".txt");
                 for (int ix = 0; ix != nx; ix++)

@@ -4,7 +4,7 @@ from torch_geometric.nn import GCNConv, global_mean_pool
 
 
 class CNNClassifier(nn.Module):
-    def __init__(self):
+    def __init__(self, target_size):
         super(CNNClassifier, self).__init__()
         self.conv1 = nn.Conv2d(1, 64, 3, 1)
         self.conv2 = nn.Conv2d(64, 128, 3, 1)
@@ -12,7 +12,7 @@ class CNNClassifier(nn.Module):
         self.dropout1 = nn.Dropout(0.25)
         self.dropout2 = nn.Dropout(0.5)
         self.fc1 = nn.Linear(12*12*256, 32)
-        self.fc2 = nn.Linear(32, 2)
+        self.fc2 = nn.Linear(32, target_size)
         self.relu = nn.ReLU()
 
     def forward(self, x):

@@ -54,57 +54,89 @@ def create_param_list(nconf, t_start, L, model_name, q=None):
     return prm_list, t_end
 
 
-def create_train_data_hold_out(prm_list, ndata, T_cr, exclude_T=None):
+def create_train_data_hold_out(prm_list, ndata, T_cr_1, exclude_T, total_label, T_cr_2=None):
     train_dataset, valid_dataset, exclude_dataset = [], [], []
-    if exclude_T != None: 
-        (t_start, t_end) = exclude_T
+    if total_label == 2:
+        (t_start1, t_end1) = exclude_T
+    elif total_label == 3:
+        (t_start1, t_end1, t_start2, t_end2) = exclude_T
+    else:
+        print("Please set argument:'total_label'")
     for itemp in range(len(prm_list)):
         temp, fname = prm_list[itemp]
-        if temp < T_cr:
-            label = 0
-        else:
-            label = 1
-
-        for itrj in range(ndata):
-            npsc = np.load(f"{fname}{itrj}.npy")
-            if temp >= t_start and temp <= t_end:
-                exclude_dataset.append((torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
-                if itrj == 99: break
-            else:
-                if itrj < 150:
-                    train_dataset.append((torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
-                else:
-                    valid_dataset.append((torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
-    valid_dataset.extend(exclude_dataset)
-    valid_dataset = sorted(valid_dataset, reverse=False, key=lambda x: x[1])
-
-    return train_dataset, valid_dataset
-
-def create_train_data_CV(prm_list, ndata, T_cr_1, T_cr_2=None, exclude_T=None):
-    dataset, exclude_dataset = [], []
-    if exclude_T != None: 
-        (t_start, t_end) = exclude_T
-    for itemp in range(len(prm_list)):
-        temp, fname = prm_list[itemp]
-        if T_cr_2 == None:
+        if total_label == 2:
+            condition = temp >= t_start1 and temp <= t_end1
             if temp < T_cr_1:
                 label = 0
             else:
                 label = 1
-        else:
+        elif total_label == 3:
+            condition = (temp >= t_start1 and temp <= t_end1) or (temp >= t_start2 and temp <= t_end2)
             if temp < T_cr_1:
                 label = 0
             elif temp > T_cr_1 and temp < T_cr_2:
                 label = 1
             else:
                 label = 2
+        else:
+            print("Please set argument:'total_label'")
 
         for itrj in range(ndata):
             npsc = np.load(f"{fname}{itrj}.npy")
-            if temp >= t_start and temp <= t_end:
-                exclude_dataset.append((torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
-                if itrj == 99: break
+            if condition:
+                exclude_dataset.append(
+                    (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
+                if itrj == 99:
+                    break
             else:
-                dataset.append((torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
+                if itrj < 150:
+                    train_dataset.append(
+                        (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
+                else:
+                    valid_dataset.append(
+                        (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
+    valid_dataset.extend(exclude_dataset)
+    valid_dataset = sorted(valid_dataset, reverse=False, key=lambda x: x[1])
+
+    return train_dataset, valid_dataset
+
+
+def create_train_data_CV(prm_list, ndata, T_cr_1, exclude_T, total_label, T_cr_2=None):
+    dataset, exclude_dataset = [], []
+    if total_label == 2:
+        (t_start1, t_end1) = exclude_T
+    elif total_label == 3:
+        (t_start1, t_end1, t_start2, t_end2) = exclude_T
+    else:
+        print("Please set argument:'total_label'")
+    for itemp in range(len(prm_list)):
+        temp, fname = prm_list[itemp]
+        if total_label == 2:
+            condition = temp >= t_start1 and temp <= t_end1
+            if temp < T_cr_1:
+                label = 0
+            else:
+                label = 1
+        elif total_label == 3:
+            condition = (temp >= t_start1 and temp <= t_end1) or (temp >= t_start2 and temp <= t_end2)
+            if temp < T_cr_1:
+                label = 0
+            elif temp > T_cr_1 and temp < T_cr_2:
+                label = 1
+            else:
+                label = 2
+        else:
+            print("Please set argument:'total_label'")
+
+        for itrj in range(ndata):
+            npsc = np.load(f"{fname}{itrj}.npy")
+            if condition:
+                exclude_dataset.append(
+                    (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
+                if itrj == 99:
+                    break
+            else:
+                dataset.append(
+                    (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
 
     return dataset, exclude_dataset
