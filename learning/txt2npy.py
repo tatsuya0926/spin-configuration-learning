@@ -29,14 +29,13 @@ def txt2npy(inputs):
 def convert_txt2npy(L, nconf, ndata, model_name, Q=None):
     values = [(t, i, L, model_name, Q)
               for t in range(nconf) for i in range(ndata)]
-    list(tqdm(Pool().imap(txt2npy, values), total=nconf*ndata))
-    Pool().close()
-    Pool().join()
-
+    with Pool() as pool:
+        list(tqdm(pool.imap(txt2npy, values), total=nconf*ndata))
 
 if __name__ == '__main__':
-    convert_txt2npy(L=64, nconf=31, ndata=50, model_name="2d_Ising")
-    # convert_txt2npy(L=64, nconf=31, ndata=50, model_name="2d_Potts")
-    # convert_txt2npy(L=64, nconf=31, ndata=25, model_name="2d_Clock", Q=2)
-    # convert_txt2npy(L=64, nconf=31, ndata=25, model_name="2d_Clock", Q=4)
-    # convert_txt2npy(L=64, nconf=31, ndata=25, model_name="2d_Clock", Q=5)
+    convert_txt2npy(L=64, nconf=31, ndata=300, model_name="2d_Ising")
+    # convert_txt2npy(L=64, nconf=31, ndata=200, model_name="2d_Potts", Q=3)
+    # convert_txt2npy(L=64, nconf=31, ndata=200, model_name="2d_Potts", Q=5)
+    # convert_txt2npy(L=64, nconf=31, ndata=200, model_name="2d_Clock", Q=2)
+    # convert_txt2npy(L=64, nconf=51, ndata=200, model_name="2d_Clock", Q=4)
+    # convert_txt2npy(L=64, nconf=81, ndata=200, model_name="2d_Clock", Q=6)
