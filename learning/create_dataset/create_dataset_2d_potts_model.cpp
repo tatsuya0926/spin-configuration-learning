@@ -3,15 +3,17 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
-const long int niter = 1000000;
+const long int niter = 100000;
 const int L = 64;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
-const double coupling_J = 1.0;
+const int monte_carlo_step = niter * nx * ny;
 const int Q = 3;
+const double coupling_J = 1.0;
 const int nconf = 30;
 const int ndata = 400;
 const double t_start = 0.85;
+const int nskip = nx * ny * 100; // Frequency of measurement
 
 double kronecker_delta(const int spin_1, const int spin_2)
 {
@@ -82,7 +84,7 @@ int main()
             }
         }
         // 各温度でモンテカルロシミュレーション
-        for (long int iter = 0; iter != niter; iter++)
+        for (long int iter = 0; iter != monte_carlo_step; iter++)
         {
             double rand_site = (double)rand() / RAND_MAX;
             rand_site = rand_site * nx * ny;
@@ -101,7 +103,7 @@ int main()
                 // reject
             }
 
-            if (iter > 100000 && iter % 2200 == 0 && data_num < ndata)
+            if (iter > 1000 * nx * ny && (iter + 1) % nskip == 0 && data_num < ndata)
             {
                 std::ofstream outputfile("../txtfile/2d_Potts/q=" + std::to_string(Q) + "/L" + std::to_string(L) + "T" + std::to_string(conf) + "_" + std::to_string(data_num) + ".txt");
                 for (int ix = 0; ix != nx; ix++)

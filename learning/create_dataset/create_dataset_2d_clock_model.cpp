@@ -4,16 +4,17 @@
 #include <string>
 #include <algorithm>
 const double pi = 3.141592653589793;
-const long int niter = 1000000;
+const long int niter = 100000;
 const int L = 64;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
-const double coupling_J = 1.0;
+const int monte_carlo_step = niter * nx * ny;
 const int Q = 4;
+const double coupling_J = 1.0;
 const int nconf = 50;
 const int ndata = 300;
 const double t_start = 0.9;
-// dataset_num = (nconf + 1) * ndata;
+const int nskip = nx * ny * 100; // Frequency of measurement
 
 double calc_action_change(const int spin[nx][ny], const int next_spin, const double coupling_J, const double temperature, const int ix, const int iy)
 {
@@ -64,7 +65,7 @@ int main()
             }
         }
         // 各温度でモンテカルロシミュレーション
-        for (long int iter = 0; iter != niter; iter++)
+        for (long int iter = 0; iter != monte_carlo_step; iter++)
         {
             double rand_site = (double)rand() / RAND_MAX;
             rand_site = rand_site * nx * ny;
@@ -83,7 +84,7 @@ int main()
                 // reject
             }
 
-            if (iter > 100000 && iter % 2995 == 0 && data_num < ndata)
+            if (iter > 1000 * nx * ny && (iter + 1) % nskip == 0 && data_num < ndata)
             {
                 std::ofstream outputfile("../txtfile/2d_Clock/q=" + std::to_string(Q) + "/L" + std::to_string(L) + "T" + std::to_string(conf) + "_" + std::to_string(data_num) + ".txt");
                 for (int ix = 0; ix != nx; ix++)

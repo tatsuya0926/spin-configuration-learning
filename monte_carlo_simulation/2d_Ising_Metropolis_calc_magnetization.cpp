@@ -1,33 +1,16 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
-const long int niter = 4096000;
-const int L = 256;
+const long int niter = 100000;
+const int L = 128;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
+const int monte_calro_step = niter * nx * ny;
 const double coupling_J = 1.0;
-const int nconf = 90;
-const double t_start = 1.7;
-const int nskip = 4000; // Frequency of measurement
+const int nconf = 80;
+const double t_start = 1.8;
+const int nskip = nx * ny * 10; // Frequency of measurement
 const int nconfig = 1;
-
-double calc_action(const int spin[nx][ny], const double coupling_J, const double temperature)
-{
-    double action = 0.0;
-    int sum = 0;
-    for (int ix = 0; ix != nx; ix++)
-    {
-        int ixp1 = (ix + 1) % nx;
-        for (int iy = 0; iy != ny; iy++)
-        {
-            int iyp1 = (iy + 1) % ny;
-            sum += spin[ix][iy] * spin[ixp1][iy] + spin[ix][iy] * spin[ix][iyp1];
-        }
-    }
-    action = sum * coupling_J / temperature * (-1e0);
-
-    return action;
-}
 
 double calc_action_change(const int spin[nx][ny], const double coupling_J, const double temperature, const int ix, const int iy)
 {
@@ -45,9 +28,9 @@ double calc_action_change(const int spin[nx][ny], const double coupling_J, const
     return action_change;
 }
 
-int calc_total_spin(const int spin[nx][ny])
+double calc_total_spin(const int spin[nx][ny])
 {
-    int total_spin = 0;
+    double total_spin = 0;
     for (int ix = 0; ix < nx; ix++)
     {
         for (int iy = 0; iy < ny; iy++)
@@ -55,7 +38,7 @@ int calc_total_spin(const int spin[nx][ny])
             total_spin += spin[ix][iy];
         }
     }
-    if(total_spin < 0)
+    if (total_spin < 0)
     {
         total_spin = -total_spin;
     }
@@ -65,7 +48,7 @@ int calc_total_spin(const int spin[nx][ny])
 double calc_magnetization(const int total_spin, const int total_sampling)
 {
     double magnetization = 0;
-    magnetization = total_spin / total_sampling;
+    magnetization = (double)total_spin / (double)total_sampling;
     if (magnetization < 0)
     {
         magnetization = -magnetization;
@@ -81,7 +64,6 @@ int main()
     {
         temperature[i] = sum;
         sum += 0.01;
-        
     }
     std::ofstream outputfile("output/2d_Ising_L" + std::to_string(L) + "_magnetization_metropolis.txt");
     for (int conf = 0; conf < nconf + 1; conf++)
@@ -130,7 +112,7 @@ int main()
             inputconfig.close();
         }
         // 各温度でのモンテカルロシミュレーション
-        for (long int iter = 0; iter != niter; iter++)
+        for (long int iter = 0; iter != monte_calro_step; iter++)
         {
             double rand_site = (double)rand() / RAND_MAX;
             rand_site = rand_site * nx * ny;
@@ -147,7 +129,7 @@ int main()
             {
                 // reject
             }
-            if (iter == niter - 1)
+            if (iter > 1000 * nx * ny && (iter + 1) % nskip == 0)
             {
                 total_spin_sum += calc_total_spin(spin);
                 count++;
