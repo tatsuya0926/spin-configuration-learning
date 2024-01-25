@@ -5,7 +5,7 @@ const long int niter = 100000;
 const int L = 64;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
-const int monte_calro_step = niter * nx * ny;
+const int monte_carlo_step = niter * nx * ny;
 const double coupling_J = 1.0;
 const int nconf = 30;
 const double t_start = 2.1;
@@ -126,7 +126,7 @@ int main()
             inputconfig.close();
         }
         // 各温度でのモンテカルロシミュレーション
-        for (long int iter = 0; iter != monte_calro_step; iter++)
+        for (long int iter = 0; iter != monte_carlo_step; iter++)
         {
             double rand_site = (double)rand() / RAND_MAX;
             rand_site = rand_site * nx * ny;
