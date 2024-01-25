@@ -8,10 +8,10 @@ const int L = 64;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
 const double coupling_J = 1.0;
-const int Q = 5;
+const int Q = 3;
 const int nconf = 30;
 const int ndata = 400;
-const double t_start = 0.7;
+const double t_start = 0.85;
 
 double kronecker_delta(const int spin_1, const int spin_2)
 {
@@ -44,7 +44,15 @@ double calc_action_change(const int spin[nx][ny], const int next_spin, const dou
                         kronecker_delta(next_spin, spin[ixm1][iy]) -
                         kronecker_delta(next_spin, spin[ix][iym1]);
 
-    action_change = sum_change * coupling_J / temperature;
+    if (sum_change > 0)
+    {
+        action_change = 1;
+    }
+    else
+    {
+        action_change = sum_change * coupling_J / temperature;
+        action_change = exp(-action_change);
+    }
 
     return action_change;
 }
@@ -83,7 +91,7 @@ int main()
             double metropolis = (double)rand() / RAND_MAX;
             int next_spin = rand() % Q;
             double action_change = calc_action_change(spin, next_spin, coupling_J, T, ix, iy);
-            if (exp(-action_change) > metropolis)
+            if (action_change > metropolis)
             {
                 // accept
                 spin[ix][iy] = next_spin; // flip

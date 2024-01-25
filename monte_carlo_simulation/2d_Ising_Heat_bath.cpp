@@ -9,9 +9,7 @@ const double coupling_h = 0.1;
 const double temperature = 5.0;
 const int nskip = 100; // Frequency of measurement
 const int nconfig = 1; // 0 -> read 'input_config.txt'; 1 -> all up; -1 -> all down
-/*********************************/
-/*** Calculation of the action ***/
-/*********************************/
+
 double calc_action(const int spin[nx][ny], const double coupling_J, const double coupling_h, const double temperature)
 {
     double action = 0e0;
@@ -19,10 +17,10 @@ double calc_action(const int spin[nx][ny], const double coupling_J, const double
     int sum2 = 0;
     for (int ix = 0; ix != nx; ix++)
     {
-        int ixp1 = (ix + 1) % nx; // ixp1=ix+1; be careful about the boundary condition.
+        int ixp1 = (ix + 1) % nx;
         for (int iy = 0; iy != ny; iy++)
         {
-            int iyp1 = (iy + 1) % ny; // iyp1=iy+1; be careful about the boundary condition.
+            int iyp1 = (iy + 1) % ny;
             sum1 = sum1 + spin[ix][iy];
             sum2 = sum2 + spin[ix][iy] * spin[ixp1][iy] + spin[ix][iy] * spin[ix][iyp1];
         }
@@ -31,20 +29,17 @@ double calc_action(const int spin[nx][ny], const double coupling_J, const double
 
     return action;
 }
-/*********************************************/
-/*** Calculation of the probability        ***/
-/***  when the spin at (ix,iy) is updated  ***/
-/*********************************************/
+
 double heat_bath_probability(const int spin[nx][ny], const double coupling_J, const double coupling_h, const double temperature, const int ix, const int iy)
 {
     double action_change = 0e0;
     double temp = 0e0;
     double Ep, Em; // E_+, E_-
 
-    int ixp1 = (ix + 1) % nx;      // ixp1=ix+1; be careful about the boundary condition.
-    int iyp1 = (iy + 1) % ny;      // iyp1=iy+1; be careful about the boundary condition.
-    int ixm1 = (ix - 1 + nx) % nx; // ixm1=ix-1; be careful about the boundary condition.
-    int iym1 = (iy - 1 + ny) % ny; // iym1=iy-1; be careful about the boundary condition.
+    int ixp1 = (ix + 1) % nx;
+    int iyp1 = (iy + 1) % ny;
+    int ixm1 = (ix - 1 + nx) % nx;
+    int iym1 = (iy - 1 + ny) % ny;
 
     temp = coupling_h;
     temp = temp + (spin[ixp1][iy] + spin[ix][iyp1] + spin[ixm1][iy] + spin[ix][iym1]) * coupling_J;
@@ -56,9 +51,7 @@ double heat_bath_probability(const int spin[nx][ny], const double coupling_J, co
 
     return ratio;
 }
-/*************************************/
-/*** Calculation of the total spin ***/
-/*************************************/
+
 int calc_total_spin(const int spin[nx][ny])
 {
     int total_spin = 0;
@@ -92,9 +85,6 @@ int main()
 {
     int spin[nx][ny];
     srand((unsigned)time(NULL));
-    /*********************************/
-    /********* 初期状態の決定 ********/
-    /*********************************/
     if (nconfig == 1)
     {
         for (int ix = 0; ix != nx; ix++)
@@ -132,9 +122,6 @@ int main()
         }
         inputconfig.close();
     }
-    /*****************/
-    /**** 熱浴法 *****/
-    /*****************/
     std::ofstream outputfile("output/Heat_bath/2d_Ising_Heat_bath_output_t5.txt");
     int count = 0;
 
@@ -159,9 +146,6 @@ int main()
         int total_spin = calc_total_spin(spin);
         int total_plus_spin = calc_total_plus_spin(spin);
         double energy = calc_action(spin, coupling_J, coupling_h, temperature) * temperature;
-        /*******************/
-        /*** data output ***/
-        /*******************/
         // if (iter % nskip == 0)
         // {
         //     std::ofstream outputconfig("output/fig/2d_Ising_Heat_bath_output_config_" + std::to_string(count) + ".txt");
