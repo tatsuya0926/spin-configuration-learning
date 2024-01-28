@@ -33,10 +33,10 @@ class Mydataset(torch.utils.data.Dataset):
         return Data(x=x, y=None, edge_index=edge_index)
 
     def __getitem__(self, index):
-        img, label = self.dataset[index]
+        img, temp, label = self.dataset[index]
         graph_data = self.convert_img2graph(img, top_k=5)
 
-        return graph_data, label
+        return graph_data, temp, label
 
 
 def create_param_list(nconf, t_start, L, model_name, q=None):
@@ -55,7 +55,7 @@ def create_param_list(nconf, t_start, L, model_name, q=None):
 
 
 def create_train_data_hold_out(prm_list, ndata, T_cr_1, exclude_T, total_label, T_cr_2=None):
-    train_dataset, valid_dataset, exclude_dataset = [], [], []
+    train_dataset, valid_dataset, merge_valid_dataset, exclude_dataset = [], [], [], []
     if total_label == 2:
         (t_start1, t_end1) = exclude_T
     elif total_label == 3:
@@ -89,16 +89,18 @@ def create_train_data_hold_out(prm_list, ndata, T_cr_1, exclude_T, total_label, 
                 if itrj == 99:
                     break
             else:
-                if itrj < 150:
+                if itrj < 400:
                     train_dataset.append(
                         (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
                 else:
                     valid_dataset.append(
                         (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
-    valid_dataset.extend(exclude_dataset)
-    valid_dataset = sorted(valid_dataset, reverse=False, key=lambda x: x[1])
+                    merge_valid_dataset.append(
+                        (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
+    merge_valid_dataset.extend(exclude_dataset)
+    merge_valid_dataset = sorted(merge_valid_dataset, reverse=False, key=lambda x: x[1])
 
-    return train_dataset, valid_dataset
+    return train_dataset, valid_dataset, merge_valid_dataset
 
 
 def create_train_data_CV(prm_list, ndata, T_cr_1, exclude_T, total_label, T_cr_2=None):
@@ -140,3 +142,52 @@ def create_train_data_CV(prm_list, ndata, T_cr_1, exclude_T, total_label, T_cr_2
                     (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
 
     return dataset, exclude_dataset
+
+def inference(total_test_dataset, temps, prediction_test, target_size):
+    xs, y1s, y2s, y3s = [], [], [], []
+    sum_pred_0, sum_pred_1, sum_pred_2 = 0, 0, 0
+    count = 0
+
+    for i in range(total_test_dataset):
+        if i == 0:
+            sum_pred_0, sum_pred_1, sum_pred_2 = __pred_count(
+                sum_pred_0, sum_pred_1, sum_pred_2, prediction_test[i])
+            count += 1
+            xs.append(temps[i])
+        else:
+            if temps[i] != temps[i-1]:
+                # 格納
+                y1s.append(sum_pred_0/count)
+                y2s.append(sum_pred_1/count)
+                if target_size == 3:
+                    y3s.append(sum_pred_2/count)
+
+                sum_pred_0, sum_pred_1, sum_pred_2 = 0, 0, 0
+                count = 0
+                sum_pred_0, sum_pred_1, sum_pred_2 = __pred_count(
+                    sum_pred_0, sum_pred_1, sum_pred_2, prediction_test[i])
+                count += 1
+                xs.append(temps[i])
+            elif i == total_test_dataset-1:
+                # 格納
+                y1s.append(sum_pred_0/count)
+                y2s.append(sum_pred_1/count)
+                if target_size == 3:
+                    y3s.append(sum_pred_2/count)
+            else:
+                sum_pred_0, sum_pred_1, sum_pred_2 = __pred_count(
+                    sum_pred_0, sum_pred_1, sum_pred_2, prediction_test[i])
+                count += 1
+    if target_size == 2:
+        return np.array(xs), np.array(y1s), np.array(y2s)
+    elif target_size == 3:
+        return np.array(xs), np.array(y1s), np.array(y2s), np.array(y3s)
+
+def __pred_count(sum_pred_0, sum_pred_1, sum_pred_2, prediction_test):
+    if prediction_test == 0:
+        sum_pred_0 += 1
+    elif prediction_test == 1:
+        sum_pred_1 += 1
+    else:
+        sum_pred_2 += 1
+    return sum_pred_0, sum_pred_1, sum_pred_2

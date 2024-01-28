@@ -3,17 +3,20 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
-const long int niter = 100000;
+const long int monte_carlo_step = 100000;
 const int L = 64;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
-const int monte_carlo_step = niter * nx * ny;
-const int Q = 3;
+const int niter = monte_carlo_step * nx * ny;
+// const int Q = 3;
+const int Q = 5;
 const double coupling_J = 1.0;
 const int nconf = 30;
-const int ndata = 400;
-const double t_start = 0.85;
+const int ndata = 1000;
+// const double t_start = 0.85;
+const double t_start = 0.7;
 const int nskip = nx * ny * 100; // Frequency of measurement
+const int nconfig = 0;
 
 double kronecker_delta(const int spin_1, const int spin_2)
 {
@@ -45,16 +48,7 @@ double calc_action_change(const int spin[nx][ny], const int next_spin, const dou
                         kronecker_delta(next_spin, spin[ix][iyp1]) -
                         kronecker_delta(next_spin, spin[ixm1][iy]) -
                         kronecker_delta(next_spin, spin[ix][iym1]);
-
-    if (sum_change > 0)
-    {
-        action_change = 1;
-    }
-    else
-    {
-        action_change = sum_change * coupling_J / temperature;
-        action_change = exp(-action_change);
-    }
+    action_change = sum_change * coupling_J / temperature;
 
     return action_change;
 }
@@ -76,15 +70,25 @@ int main()
         int spin[nx][ny];
         srand((unsigned)time(NULL));
         // 初期化
-        for (int ix = 0; ix != nx; ix++)
+        if (nconfig == 0)
         {
-            for (int iy = 0; iy != ny; iy++)
+            std::ifstream inputconfig("input/2d_Potts_q=" + std::to_string(Q) + "_output_config.txt");
+            if (!inputconfig)
             {
-                spin[ix][iy] = 0;
+                std::cout << "inputfile not found" << std::endl;
+                exit(1);
             }
+            for (int ix = 0; ix != nx; ix++)
+            {
+                for (int iy = 0; iy != ny; iy++)
+                {
+                    inputconfig >> ix >> iy >> spin[ix][iy];
+                }
+            }
+            inputconfig.close();
         }
         // 各温度でモンテカルロシミュレーション
-        for (long int iter = 0; iter != monte_carlo_step; iter++)
+        for (long int iter = 0; iter != niter; iter++)
         {
             double rand_site = (double)rand() / RAND_MAX;
             rand_site = rand_site * nx * ny;
@@ -93,7 +97,7 @@ int main()
             double metropolis = (double)rand() / RAND_MAX;
             int next_spin = rand() % Q;
             double action_change = calc_action_change(spin, next_spin, coupling_J, T, ix, iy);
-            if (action_change > metropolis)
+            if (exp(-action_change) > metropolis)
             {
                 // accept
                 spin[ix][iy] = next_spin; // flip

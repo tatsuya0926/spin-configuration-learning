@@ -4,17 +4,21 @@
 #include <string>
 #include <algorithm>
 const double pi = 3.141592653589793;
-const long int niter = 100000;
+const long int monte_carlo_step = 100000;
 const int L = 64;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
-const int monte_carlo_step = niter * nx * ny;
-const int Q = 4;
+const int niter = monte_carlo_step * nx * ny;
+// const int Q = 4;
+const int Q = 6;
 const double coupling_J = 1.0;
-const int nconf = 50;
-const int ndata = 300;
-const double t_start = 0.9;
+// const int nconf = 50;
+const int nconf = 80;
+const int ndata = 1000;
+// const double t_start = 0.9;
+const double t_start = 0.4;
 const int nskip = nx * ny * 100; // Frequency of measurement
+const int nconfig = 0;
 
 double calc_action_change(const int spin[nx][ny], const int next_spin, const double coupling_J, const double temperature, const int ix, const int iy)
 {
@@ -57,15 +61,25 @@ int main()
         int spin[nx][ny];
         srand((unsigned)time(NULL));
         // 初期化
-        for (int ix = 0; ix != nx; ix++)
+        if (nconfig == 0)
         {
-            for (int iy = 0; iy != ny; iy++)
+            std::ifstream inputconfig("input/2d_Clock_q=" + std::to_string(Q) + "_output_config.txt");
+            if (!inputconfig)
             {
-                spin[ix][iy] = 1;
+                std::cout << "inputfile not found" << std::endl;
+                exit(1);
             }
+            for (int ix = 0; ix != nx; ix++)
+            {
+                for (int iy = 0; iy != ny; iy++)
+                {
+                    inputconfig >> ix >> iy >> spin[ix][iy];
+                }
+            }
+            inputconfig.close();
         }
         // 各温度でモンテカルロシミュレーション
-        for (long int iter = 0; iter != monte_carlo_step; iter++)
+        for (long int iter = 0; iter != niter; iter++)
         {
             double rand_site = (double)rand() / RAND_MAX;
             rand_site = rand_site * nx * ny;
@@ -86,7 +100,7 @@ int main()
 
             if (iter > 1000 * nx * ny && (iter + 1) % nskip == 0 && data_num < ndata)
             {
-                std::ofstream outputfile("../txtfile/2d_Clock/q=" + std::to_string(Q) + "/L" + std::to_string(L) + "T" + std::to_string(conf) + "_" + std::to_string(data_num) + ".txt");
+                std::ofstream outputfile("../txtfile/2d_Clock/q=" + std::to_string(Q) + "/L" + std::to_string(L) + "T" + std::to_string(conf) + "_" + std::to_string(data_num + ndata) + ".txt");
                 for (int ix = 0; ix != nx; ix++)
                 {
                     for (int iy = 0; iy != ny; iy++)
