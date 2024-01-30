@@ -54,7 +54,17 @@ def create_param_list(nconf, t_start, L, model_name, q=None):
     return prm_list, t_end
 
 
-def create_train_data_hold_out(prm_list, ndata, T_cr_1, exclude_T, total_label, T_cr_2=None):
+def create_train_data_hold_out(
+    prm_list,
+    ndata,
+    T_cr_1,
+    exclude_T,
+    total_label,
+    split_num,
+    Q=None,
+    T_cr_2=None,
+    normalize=False
+):
     train_dataset, valid_dataset, merge_valid_dataset, exclude_dataset = [], [], [], []
     if total_label == 2:
         (t_start1, t_end1) = exclude_T
@@ -71,7 +81,8 @@ def create_train_data_hold_out(prm_list, ndata, T_cr_1, exclude_T, total_label, 
             else:
                 label = 1
         elif total_label == 3:
-            condition = (temp >= t_start1 and temp <= t_end1) or (temp >= t_start2 and temp <= t_end2)
+            condition = (temp >= t_start1 and temp <= t_end1) or (
+                temp >= t_start2 and temp <= t_end2)
             if temp < T_cr_1:
                 label = 0
             elif temp > T_cr_1 and temp < T_cr_2:
@@ -83,13 +94,15 @@ def create_train_data_hold_out(prm_list, ndata, T_cr_1, exclude_T, total_label, 
 
         for itrj in range(ndata):
             npsc = np.load(f"{fname}{itrj}.npy")
+            if (normalize):
+                npsc = npsc / Q
             if condition:
                 exclude_dataset.append(
                     (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
-                if itrj == 99:
+                if itrj == split_num:
                     break
             else:
-                if itrj < 400:
+                if itrj < int(ndata*0.7):
                     train_dataset.append(
                         (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
                 else:
@@ -98,12 +111,23 @@ def create_train_data_hold_out(prm_list, ndata, T_cr_1, exclude_T, total_label, 
                     merge_valid_dataset.append(
                         (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
     merge_valid_dataset.extend(exclude_dataset)
-    merge_valid_dataset = sorted(merge_valid_dataset, reverse=False, key=lambda x: x[1])
+    merge_valid_dataset = sorted(
+        merge_valid_dataset, reverse=False, key=lambda x: x[1])
 
     return train_dataset, valid_dataset, merge_valid_dataset
 
 
-def create_train_data_CV(prm_list, ndata, T_cr_1, exclude_T, total_label, T_cr_2=None):
+def create_train_data_CV(
+    prm_list,
+    ndata,
+    T_cr_1,
+    exclude_T,
+    total_label,
+    split_num,
+    Q=None,
+    T_cr_2=None,
+    normalize=False
+):
     dataset, exclude_dataset = [], []
     if total_label == 2:
         (t_start1, t_end1) = exclude_T
@@ -120,7 +144,8 @@ def create_train_data_CV(prm_list, ndata, T_cr_1, exclude_T, total_label, T_cr_2
             else:
                 label = 1
         elif total_label == 3:
-            condition = (temp >= t_start1 and temp <= t_end1) or (temp >= t_start2 and temp <= t_end2)
+            condition = (temp >= t_start1 and temp <= t_end1) or (
+                temp >= t_start2 and temp <= t_end2)
             if temp < T_cr_1:
                 label = 0
             elif temp > T_cr_1 and temp < T_cr_2:
@@ -132,16 +157,19 @@ def create_train_data_CV(prm_list, ndata, T_cr_1, exclude_T, total_label, T_cr_2
 
         for itrj in range(ndata):
             npsc = np.load(f"{fname}{itrj}.npy")
+            if (normalize):
+                npsc = npsc / Q
             if condition:
                 exclude_dataset.append(
                     (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
-                if itrj == 99:
+                if itrj == split_num:
                     break
             else:
                 dataset.append(
                     (torch.tensor(npsc, dtype=torch.float32).unsqueeze(0), temp, label))
 
     return dataset, exclude_dataset
+
 
 def inference(total_test_dataset, temps, prediction_test, target_size):
     xs, y1s, y2s, y3s = [], [], [], []
@@ -182,6 +210,7 @@ def inference(total_test_dataset, temps, prediction_test, target_size):
         return np.array(xs), np.array(y1s), np.array(y2s)
     elif target_size == 3:
         return np.array(xs), np.array(y1s), np.array(y2s), np.array(y3s)
+
 
 def __pred_count(sum_pred_0, sum_pred_1, sum_pred_2, prediction_test):
     if prediction_test == 0:

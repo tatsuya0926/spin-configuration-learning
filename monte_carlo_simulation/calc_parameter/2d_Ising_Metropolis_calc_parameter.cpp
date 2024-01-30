@@ -2,13 +2,13 @@
 #include <cmath>
 #include <fstream>
 const long int niter = 100000;
-const int L = 64;
+const int L = 16;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
 const int monte_carlo_step = niter * nx * ny;
 const double coupling_J = 1.0;
-const int nconf = 30;
-const double t_start = 2.1;
+const int nconf = 60;
+const double t_start = 1.9;
 const int nskip = nx * ny * 10; // Frequency of measurement
 const int nconfig = 1;
 
@@ -76,7 +76,7 @@ int main()
         temperature[i] = sum;
         sum += 0.01;
     }
-    std::ofstream outputfile("output/2d_Ising_L" + std::to_string(L) + "_parameter_metropolis.txt");
+    std::ofstream outputfile("../output/2d_Ising_L" + std::to_string(L) + "_parameter_metropolis.txt");
     for (int conf = 0; conf < nconf + 1; conf++)
     {
         double T = temperature[conf];

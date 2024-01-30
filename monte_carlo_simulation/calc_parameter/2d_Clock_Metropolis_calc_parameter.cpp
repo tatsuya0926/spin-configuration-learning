@@ -75,6 +75,35 @@ double calc_total_spin(const int spin[nx][ny])
     return total_spin;
 }
 
+double calc_squared_magnetization(const int spin[nx][ny])
+{
+    std::vector<double> m(Q, 0.0);
+    for (int ix = 0; ix < nx; ix++)
+    {
+        for (int iy = 0; iy < ny; iy++)
+        {
+            m[spin[ix][iy]] += 1;
+        }
+    }
+    for (int i = 0; i < Q; i++)
+    {
+        m[i] /= static_cast<double>(nx * ny);
+    }
+    double m2 = 0.0;
+    for (int i = 0; i < Q; i++)
+    {
+        m2 += m[i] * m[i];
+    }
+    for (int i = 0; i < Q - 1; i++)
+    {
+        for (int j = i + 1; j < Q; j++)
+        {
+            m2 -= 2.0 * m[i] * m[j] / (Q - 1);
+        }
+    }
+    return m2;
+}
+
 int main()
 {
     double temperature[nconf + 1];
@@ -90,10 +119,8 @@ int main()
         double T = temperature[conf];
         // 初期化
         int count = 0;
-        int total_spin_sum = 0;
-        int squared_total_spin_sum = 0;
-        double energy_sum = 0;
-        double squared_energy_sum = 0;
+        int total_m2 = 0;
+        int total_m4 = 0;
         int spin[nx][ny];
         srand((unsigned)time(NULL));
         if (nconfig == 1)
@@ -118,7 +145,7 @@ int main()
         }
         if (nconfig == 0)
         {
-            std::ifstream inputconfig("output/2d_Ising_Metropolis_output_config.txt");
+            std::ifstream inputconfig("output/2d_Clock_Metropolis_output_config.txt");
             if (!inputconfig)
             {
                 std::cout << "inputfile not found" << std::endl;
@@ -154,35 +181,24 @@ int main()
             }
             if (iter > 1000 * nx * ny && (iter + 1) % nskip == 0)
             {
-                double total_spin = calc_total_spin(spin);
-                total_spin_sum += total_spin;
-                squared_total_spin_sum += total_spin * total_spin;
-                double energy = calc_energy(spin, coupling_J, T);
-                energy_sum += energy;
-                squared_energy_sum += energy * energy;
+                double m2 = calc_squared_magnetization(spin);
+                total_m2 += m2;
+                total_m4 += m2*m2;
                 count++;
             }
         }
         std::cout << count << std::endl;
-        double M = total_spin_sum / count;
-        double squared_total_spin_moment = squared_total_spin_sum / count;
-        double E = energy_sum / count;
-        double squared_energy_moment = squared_energy_sum / count;
+        total_m2 /= count;
+        total_m4 /= count;
 
-        double magnetization = M / (nx * ny);
-        double magnetic_susceptibility = (squared_total_spin_moment - M * M) / (T * nx * ny);
-        double specific_heat = (squared_energy_moment - E * E) / (T * T * nx * ny);
+        double binder_ratio = total_m4 / total_m2 / total_m2;
         std::cout << std::fixed << std::setprecision(4)
                   << T << "   "
-                  << magnetization << "   "
-                  << magnetic_susceptibility << "   "
-                  << specific_heat << "   "
+                  << binder_ratio << "   "
                   << std::endl;
         outputfile << std::fixed << std::setprecision(4)
                    << T << "   "
-                   << magnetization << "   "
-                   << magnetic_susceptibility << "   "
-                   << specific_heat << "   "
+                   << binder_ratio << "   "
                    << std::endl;
     }
     outputfile.close();

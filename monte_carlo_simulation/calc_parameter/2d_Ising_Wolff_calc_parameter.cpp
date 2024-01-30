@@ -2,18 +2,37 @@
 #include <cmath>
 #include <fstream>
 const long int niter = 1000000;
-const int L = 128;
+const int L = 16;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
 const double coupling_J = 1.0;
-const int nconf = 80;
-const double t_start = 1.8;
-const int nskip = 10;
+const int nconf = 60;
+const double t_start = 1.9;
+const int nskip = 100;
+
+double calc_energy(const int spin[nx][ny], const double coupling_J, const double temperature)
+{
+    double action = 0.0;
+    double sum = 0;
+    for (int ix = 0; ix != nx; ix++)
+    {
+        int ixp1 = (ix + 1) % nx;
+        for (int iy = 0; iy != ny; iy++)
+        {
+            int iyp1 = (iy + 1) % ny;
+            sum = sum + spin[ix][iy] * spin[ixp1][iy]
+                      + spin[ix][iy] * spin[ix][iyp1];
+        }
+    }
+    action = sum * coupling_J / temperature * (-1e0);
+
+    return action;
+}
 
 double calc_action(const int spin[nx][ny], const double coupling_J, const double temperature)
 {
     double action = 0e0;
-    int sum = 0;
+    double sum = 0;
     for (int ix = 0; ix != nx; ix++)
     {
         int ixp1 = (ix + 1) % nx;
@@ -155,12 +174,15 @@ int main()
         sum += 0.01;
         std::cout << temperature[i] << std::endl;
     }
-    std::ofstream outputfile("output/2d_Ising_L" + std::to_string(L) + "_magnetization_wolff.txt");
+    std::ofstream outputfile("../output/2d_Ising_L" + std::to_string(L) + "_parameter_wolff.txt");
     for (int conf = 0; conf < nconf + 1; conf++)
     {
         double T = temperature[conf];
         int count = 0;
-        int total_spin_sum = 0;
+        double total_spin_sum = 0;
+        double squared_total_spin_sum = 0;
+        double energy_sum = 0;
+        double squared_energy_sum = 0;
         int spin[nx][ny];
         srand((unsigned)time(NULL));
         for (int ix = 0; ix != nx; ix++)
@@ -186,19 +208,36 @@ int main()
 
             if (iter > 100000 && (iter + 1) % nskip == 0)
             {
-                total_spin_sum += calc_total_spin(spin);
+                double total_spin = calc_total_spin(spin);
+                total_spin_sum += total_spin;
+                squared_total_spin_sum += total_spin * total_spin;
+                double energy = calc_energy(spin, coupling_J, T);
+                energy_sum += energy;
+                squared_energy_sum += energy * energy;
                 count++;
             }
         }
-        std::cout << count << std::endl;
-        double magnetization = calc_magnetization(total_spin_sum, count);
-        double m = magnetization / (nx * ny);
+        // std::cout << count << std::endl;
+        double M = total_spin_sum / count;
+        double squared_total_spin_moment = squared_total_spin_sum / count;
+        double E = energy_sum / count;
+        double squared_energy_moment = squared_energy_sum / count;
+
+        double magnetization = M / (nx * ny);
+        double magnetic_susceptibility = (squared_total_spin_moment - M * M) / (T * nx * ny);
+        double specific_heat = (squared_energy_moment - E * E) / (T * T * nx * ny);
         std::cout << std::fixed << std::setprecision(4)
                   << T << "   "
-                  << m << std::endl;
+                  << magnetization << "   "
+                  << magnetic_susceptibility << "   "
+                  << specific_heat << "   "
+                  << std::endl;
         outputfile << std::fixed << std::setprecision(4)
                    << T << "   "
-                   << m << std::endl;
+                   << magnetization << "   "
+                   << magnetic_susceptibility << "   "
+                   << specific_heat << "   "
+                   << std::endl;
     }
     outputfile.close();
     return 0;
