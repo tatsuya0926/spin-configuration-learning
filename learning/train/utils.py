@@ -49,7 +49,7 @@ def create_param_list(nconf, t_start, L, model_name, q=None):
             filename = f"../dataset/{model_name}/L{L}_q={q}/L{L}T{i}_"
         prm_list.append([float(t_start), filename])
         t_start += Decimal("0.01")
-    t_end = t_start
+    t_end = t_start - Decimal("0.01")
 
     return prm_list, t_end
 
