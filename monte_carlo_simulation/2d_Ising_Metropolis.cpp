@@ -1,14 +1,16 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
-const long int niter = 1000000;
-const int nx = 64; // number of sites along x-direction
-const int ny = 64; // number of sites along y-direction
+const int monte_carlo_step = 100000;
+const int L = 64;
+const int nx = L; // number of sites along x-direction
+const int ny = L; // number of sites along y-direction
+const long int niter = nx * ny * monte_carlo_step;
 const double coupling_J = 1.0;
 const double coupling_h = 0;
-const double temperature = 2.5;
-const int nskip = 100; // Frequency of measurement
-const int nconfig = 1; // 0 -> read 'input_config.txt'; 1 -> all up; -1 -> all down
+const double temperature = 3.8;
+const int nskip = nx * ny; // Frequency of measurement
+const int nconfig = 0;           // 0 -> read 'input_config.txt'; 1 -> all up; -1 -> all down
 /*********************************/
 /*** Calculation of the action ***/
 /*********************************/
@@ -88,6 +90,7 @@ int calc_total_plus_spin(const int spin[nx][ny])
 int main()
 {
     int spin[nx][ny];
+    int count = 0;
     srand((unsigned)time(NULL));
     /*********************************/
     /********* 初期状態の決定 ********/
@@ -114,7 +117,7 @@ int main()
     }
     if (nconfig == 0)
     {
-        std::ifstream inputconfig("output/2d_Ising_Metropolis_output_config.txt");
+        std::ifstream inputconfig("output/2d_Ising_output_config.txt");
         if (!inputconfig)
         {
             std::cout << "inputfile not found" << std::endl;
@@ -129,12 +132,7 @@ int main()
         }
         inputconfig.close();
     }
-    /*****************/
-    /* metropolis法 **/
-    /*****************/
-    std::ofstream outputfile("output/2d_Ising_Metropolis_output_t2.5.txt");
-    int naccept = 0; //受理した合計数
-    int count = 0;
+    // std::ofstream outputfile("output/2d_Ising_Metropolis_output_t2.5.txt");
 
     for (long int iter = 0; iter != niter; iter++)
     {
@@ -148,49 +146,46 @@ int main()
         {
             // accept
             spin[ix][iy] = -spin[ix][iy]; // flip
-            naccept = naccept + 1;
         }
         else
         {
             // reject
         }
-        int total_spin = calc_total_spin(spin);
-        int total_plus_spin = calc_total_plus_spin(spin);
-        double energy = calc_action(spin, coupling_J, coupling_h, temperature) * temperature;
-        /*******************/
-        /*** data output ***/
-        /*******************/
-        // if (iter % nskip == 0)
-        // {
-        //     std::ofstream outputconfig("output/fig/2d_Ising_Metropolis_output_config_" + std::to_string(count) + ".txt");
-        //     for (int ix = 0; ix != nx; ix++)
-        //     {
-        //         for (int iy = 0; iy != ny; iy++)
-        //         {
-        //             outputconfig << ix << ' ' << iy << ' ' << spin[ix][iy] << ' ' << std::endl;
-        //         }
-        //     }
-        //     count++;
-        //     outputconfig.close();
-        // }
+        // int total_spin = calc_total_spin(spin);
+        // int total_plus_spin = calc_total_plus_spin(spin);
+        // double energy = calc_action(spin, coupling_J, coupling_h, temperature) * temperature;
 
         if ((iter + 1) % nskip == 0)
         {
-            std::cout << std::fixed << std::setprecision(4)
-                      << count * nskip << "   "
-                      << total_spin << "   "
-                      << total_plus_spin << "   "
-                      << energy << "   "
-                      << (double)naccept / (iter + 1) << std::endl;
-            outputfile << std::fixed << std::setprecision(4)
-                       << count * nskip << "   "
-                       << total_spin << "   "
-                       << total_plus_spin << "   "
-                       << energy << "   "
-                       << (double)naccept / (iter + 1) << std::endl;
+            std::ofstream outputconfig("output/fig_t38/2d_Ising_Metropolis_output_config_" + std::to_string(count) + ".txt");
+            for (int ix = 0; ix != nx; ix++)
+            {
+                for (int iy = 0; iy != ny; iy++)
+                {
+                    outputconfig << ix << ' ' << iy << ' ' << spin[ix][iy] << ' ' << std::endl;
+                }
+            }
             count++;
+            outputconfig.close();
         }
+
+        // if ((iter + 1) % nskip == 0)
+        // {
+        //     std::cout << std::fixed << std::setprecision(4)
+        //               << count * nskip << "   "
+        //               << total_spin << "   "
+        //               << total_plus_spin << "   "
+        //               << energy << "   "
+        //               << std::endl;
+        //     outputfile << std::fixed << std::setprecision(4)
+        //                << count * nskip << "   "
+        //                << total_spin << "   "
+        //                << total_plus_spin << "   "
+        //                << energy << "   "
+        //                << std::endl;
+        //     count++;
+        // }
     }
-    outputfile.close();
+    // outputfile.close();
     return 0;
 }
