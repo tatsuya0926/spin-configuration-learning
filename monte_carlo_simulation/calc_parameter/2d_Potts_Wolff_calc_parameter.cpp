@@ -2,7 +2,7 @@
 #include <cmath>
 #include <fstream>
 const long int niter = 1000000;
-const int L = 16;
+const int L = 128;
 const int nx = L; // number of sites along x-direction
 const int ny = L; // number of sites along y-direction
 const int Q = 3;
@@ -65,33 +65,10 @@ int calc_total_spin(const int spin[nx][ny])
     return total_spin;
 }
 
-double calc_order_parameter(const int spin[nx][ny])
+double calc_order_parameter(const double max_state_total_num)
 {
-    std::vector<double> m(Q, 0.0);
-    for (int ix = 0; ix < nx; ix++)
-    {
-        for (int iy = 0; iy < ny; iy++)
-        {
-            m[spin[ix][iy]] += 1;
-        }
-    }
-    for (int i = 0; i < Q; i++)
-    {
-        m[i] /= static_cast<double>(nx * ny);
-    }
-    double m2 = 0.0;
-    for (int i = 0; i < Q; i++)
-    {
-        m2 += m[i] * m[i];
-    }
-    for (int i = 0; i < Q - 1; i++)
-    {
-        for (int j = i + 1; j < Q; j++)
-        {
-            m2 -= 2.0 * m[i] * m[j] / (Q - 1);
-        }
-    }
-    return m2;
+    double order_parameter = (Q/(L*L)*max_state_total_num-1)/(Q-1);
+    return order_parameter;
 }
 
 int make_cluster(const int spin[nx][ny], const double coupling_J,
@@ -227,35 +204,18 @@ int main()
 
             if (iter > 100000 && (iter + 1) % nskip == 0)
             {
-                double total_spin = calc_total_spin(spin);
-                total_spin_sum += total_spin;
-                // squared_total_spin_sum += total_spin * total_spin;
-                // double energy = calc_energy(spin, coupling_J, T);
-                // energy_sum += energy;
-                // squared_energy_sum += energy * energy;
-                count++;
+                double max_state_total_num = ;
             }
         }
-        // std::cout << count << std::endl;
-        double M = total_spin_sum / count;
-        // double squared_total_spin_moment = squared_total_spin_sum / count;
-        // double E = energy_sum / count;
-        // double squared_energy_moment = squared_energy_sum / count;
 
-        double magnetization = M / (nx * ny);
-        // double magnetic_susceptibility = (squared_total_spin_moment - M * M) / (T * nx * ny);
-        // double specific_heat = (squared_energy_moment - E * E) / (T * T * nx * ny);
+        double order_parameter = calc_order_parameter(max_state_total_num);
         std::cout << std::fixed << std::setprecision(4)
                   << T << "   "
-                  << magnetization << "   "
-                //   << magnetic_susceptibility << "   "
-                //   << specific_heat << "   "
+                  << order_parameter << "   "            
                   << std::endl;
         outputfile << std::fixed << std::setprecision(4)
                    << T << "   "
-                   << magnetization << "   "
-                //    << magnetic_susceptibility << "   "
-                //    << specific_heat << "   "
+                   << order_parameter << "   "
                    << std::endl;
     }
     outputfile.close();
